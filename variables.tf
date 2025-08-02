@@ -5,8 +5,18 @@ variable "create_lb" {
 }
 
 variable "name" {
-  description = "Name of the Application Load Balancer"
+  description = "Name of the Application Load Balancer. Must be unique within your AWS account and region"
   type        = string
+  
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]*$", var.name))
+    error_message = "The load balancer name must contain only alphanumeric characters and hyphens."
+  }
+
+  validation {
+    condition     = length(var.name) <= 32
+    error_message = "The load balancer name must be 32 characters or less."
+  }
 }
 
 variable "internal" {
@@ -16,9 +26,19 @@ variable "internal" {
 }
 
 variable "security_groups" {
-  description = "List of security group IDs for the ALB"
+  description = "List of security group IDs for the ALB. At least one security group must be specified"
   type        = list(string)
   default     = []
+
+  validation {
+    condition     = length(var.security_groups) > 0
+    error_message = "At least one security group must be specified."
+  }
+
+  validation {
+    condition     = alltrue([for sg in var.security_groups : can(regex("^sg-[a-zA-Z0-9]+$", sg))])
+    error_message = "All security group IDs must be valid and start with 'sg-'."
+  }
 }
 
 variable "subnets" {

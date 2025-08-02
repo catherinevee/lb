@@ -2,6 +2,27 @@
 
 This Terraform module creates a comprehensive AWS Application Load Balancer (ALB) with support for listeners, target groups, and routing rules. It follows AWS best practices and provides flexibility for various use cases.
 
+## Resource Types
+
+This module creates the following AWS resources:
+
+| Resource Type | Purpose |
+|--------------|---------|
+| `aws_lb` | Application Load Balancer instance |
+| `aws_lb_listener` | Load balancer listeners for handling incoming traffic |
+| `aws_lb_target_group` | Target groups for routing traffic to backend targets |
+| `aws_lb_listener_rule` | Rules for routing traffic based on conditions |
+
+## Resource Naming
+
+Resources created by this module use the following naming convention:
+
+| Resource | Format | Example |
+|----------|--------|---------|
+| Load Balancer | `{var.name}` | `my-application-lb` |
+| Listener | `{var.name}-listener-{key}` | `my-application-lb-listener-https` |
+| Target Group | `{target_group.name}` | `app-target-group` |
+
 ## Features
 
 - **Application Load Balancer**: Create internal or internet-facing ALBs

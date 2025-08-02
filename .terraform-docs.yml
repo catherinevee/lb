@@ -1,0 +1,13 @@
+formatter: markdown table
+
+sections:
+  show:
+    - all
+
+output:
+  file: README.md
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
