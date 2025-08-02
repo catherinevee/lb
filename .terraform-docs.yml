@@ -2,7 +2,7 @@ formatter: markdown table
 
 sections:
   show:
-    - all
+  - all
 
 output:
   file: README.md
