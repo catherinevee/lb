@@ -1,21 +1,14 @@
-# Application Load Balancer
+# Network Load Balancer
 resource "aws_lb" "this" {
   count = var.create_lb ? 1 : 0
 
   name               = var.name
   internal           = var.internal
-  load_balancer_type = "application"
-  security_groups    = var.security_groups
+  load_balancer_type = "network"
   subnets            = var.subnets
 
   enable_deletion_protection       = var.enable_deletion_protection
   enable_cross_zone_load_balancing = var.enable_cross_zone_load_balancing
-  enable_http2                     = var.enable_http2
-
-  idle_timeout                = var.idle_timeout
-  enable_waf_fail_open        = var.enable_waf_fail_open
-  drop_invalid_header_fields  = var.drop_invalid_header_fields
-  preserve_host_header        = var.preserve_host_header
 
   access_logs {
     bucket  = var.access_logs_bucket

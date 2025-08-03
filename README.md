@@ -1,6 +1,28 @@
-# AWS Application Load Balancer Terraform Module
+# AWS Network Load Balancer Terraform Module
 
-This Terraform module creates a comprehensive AWS Application Load Balancer (ALB) with support for listeners, target groups, and routing rules. It follows AWS best practices and provides flexibility for various use cases.
+This Terraform module creates a comprehensive AWS Network Load Balancer (NLB) with support for TCP/TLS listeners and target groups. It follows AWS best practices and HashiCorp's Terraform Registry standards.
+
+## Requirements
+
+| Name | Version |
+|------|---------|
+| terraform | 1.13.0 |
+| aws | 6.2.0 |
+| terragrunt | 0.84.0 |
+
+## Resource Map
+
+This module manages the following AWS resources:
+
+| Category | Resource | Purpose | Managed By Module |
+|----------|----------|---------|------------------|
+| Load Balancer | `aws_lb.this` | Network Load Balancer instance | Yes |
+| Networking | `aws_lb_listener.this` | TCP/TLS listeners for the NLB | Yes |
+| Target Management | `aws_lb_target_group.this` | Target groups for backend services | Yes |
+| Health Checks | Health Check configuration | Configures TCP/HTTP health checks | Yes |
+| Monitoring | CloudWatch Metrics | Load balancer metrics and alarms | No |
+| Logging | VPC Flow Logs | Network traffic logging | No |
+| DNS | Route 53 Aliases | DNS records for the NLB | No |
 
 ## Resource Types
 
@@ -8,10 +30,9 @@ This module creates the following AWS resources:
 
 | Resource Type | Purpose |
 |--------------|---------|
-| `aws_lb` | Application Load Balancer instance |
-| `aws_lb_listener` | Load balancer listeners for handling incoming traffic |
+| `aws_lb` | Network Load Balancer instance |
+| `aws_lb_listener` | TCP/TLS listeners for handling Layer 4 traffic |
 | `aws_lb_target_group` | Target groups for routing traffic to backend targets |
-| `aws_lb_listener_rule` | Rules for routing traffic based on conditions |
 
 ## Resource Naming
 

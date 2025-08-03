@@ -1,11 +1,11 @@
 variable "create_lb" {
-  description = "Controls if the ALB should be created"
+  description = "Controls if the Network Load Balancer should be created"
   type        = bool
   default     = true
 }
 
 variable "name" {
-  description = "Name of the Application Load Balancer. Must be unique within your AWS account and region"
+  description = "Name of the Network Load Balancer. Must be unique within your AWS account and region"
   type        = string
   
   validation {
@@ -17,6 +17,39 @@ variable "name" {
     condition     = length(var.name) <= 32
     error_message = "The load balancer name must be 32 characters or less."
   }
+}
+
+variable "environment" {
+  description = "Environment tag to be applied to all resources"
+  type        = string
+  
+  validation {
+    condition     = can(regex("^(dev|staging|prod)$", var.environment))
+    error_message = "Environment must be one of: dev, staging, prod."
+  }
+}
+
+variable "enable_cross_zone_load_balancing" {
+  description = "Enable cross-zone load balancing for the NLB"
+  type        = bool
+  default     = false
+}
+
+variable "ip_address_type" {
+  description = "Type of IP addresses used by the subnets for your load balancer"
+  type        = string
+  default     = "ipv4"
+  
+  validation {
+    condition     = contains(["ipv4", "dualstack"], var.ip_address_type)
+    error_message = "IP address type must be either 'ipv4' or 'dualstack'."
+  }
+}
+
+variable "customer_owned_ipv4_pool" {
+  description = "ID of the customer owned ipv4 pool to use for this load balancer"
+  type        = string
+  default     = null
 }
 
 variable "internal" {
