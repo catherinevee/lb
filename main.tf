@@ -28,7 +28,7 @@ resource "aws_lb" "this" {
   }
 }
 
-# Application Load Balancer Listener
+# TCP/TLS listeners
 resource "aws_lb_listener" "this" {
   for_each = var.listeners
 
@@ -72,7 +72,7 @@ resource "aws_lb_listener" "this" {
   )
 }
 
-# Target Groups
+# Backend target groups
 resource "aws_lb_target_group" "this" {
   for_each = var.target_groups
 
@@ -119,7 +119,7 @@ resource "aws_lb_target_group" "this" {
   }
 }
 
-# Target Group Attachments
+# Register targets with target groups
 resource "aws_lb_target_group_attachment" "this" {
   for_each = var.target_group_attachments
 
@@ -128,7 +128,7 @@ resource "aws_lb_target_group_attachment" "this" {
   port             = each.value.port
 }
 
-# Listener Rules
+# Path and host-based routing rules
 resource "aws_lb_listener_rule" "this" {
   for_each = var.listener_rules
 

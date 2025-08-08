@@ -1,6 +1,6 @@
-# AWS Network Load Balancer Terraform Module
+# AWS Load Balancer Terraform Module
 
-This Terraform module creates a comprehensive AWS Network Load Balancer (NLB) with support for TCP/TLS listeners and target groups. It follows AWS best practices and HashiCorp's Terraform Registry standards.
+Creates AWS Network Load Balancers with TCP/TLS listeners and target groups. Handles common use cases including SSL termination, health checks, and traffic routing.
 
 ## Requirements
 
@@ -10,29 +10,20 @@ This Terraform module creates a comprehensive AWS Network Load Balancer (NLB) wi
 | aws | 6.2.0 |
 | terragrunt | 0.84.0 |
 
-## Resource Map
+## What This Module Manages
 
-This module manages the following AWS resources:
+| Resource | Purpose | Notes |
+|----------|---------|--------|
+| `aws_lb` | Load balancer instance | Network or Application type |
+| `aws_lb_listener` | Port listeners for traffic routing | Supports HTTP, HTTPS, TCP, TLS |
+| `aws_lb_target_group` | Backend target definitions | Instance, IP, or Lambda targets |
 
-| Category | Resource | Purpose | Managed By Module |
-|----------|----------|---------|------------------|
-| Load Balancer | `aws_lb.this` | Network Load Balancer instance | Yes |
-| Networking | `aws_lb_listener.this` | TCP/TLS listeners for the NLB | Yes |
-| Target Management | `aws_lb_target_group.this` | Target groups for backend services | Yes |
-| Health Checks | Health Check configuration | Configures TCP/HTTP health checks | Yes |
-| Monitoring | CloudWatch Metrics | Load balancer metrics and alarms | No |
-| Logging | VPC Flow Logs | Network traffic logging | No |
-| DNS | Route 53 Aliases | DNS records for the NLB | No |
+## Resources Not Included
 
-## Resource Types
-
-This module creates the following AWS resources:
-
-| Resource Type | Purpose |
-|--------------|---------|
-| `aws_lb` | Network Load Balancer instance |
-| `aws_lb_listener` | TCP/TLS listeners for handling Layer 4 traffic |
-| `aws_lb_target_group` | Target groups for routing traffic to backend targets |
+You'll need to manage these separately:
+- CloudWatch alarms and dashboards
+- VPC Flow Logs for network debugging  
+- Route 53 DNS records (use the `lb_dns_name` output)
 
 ## Resource Naming
 
@@ -44,19 +35,19 @@ Resources created by this module use the following naming convention:
 | Listener | `{var.name}-listener-{key}` | `my-application-lb-listener-https` |
 | Target Group | `{target_group.name}` | `app-target-group` |
 
-## Features
+## Key Features
 
-- **Application Load Balancer**: Create internal or internet-facing ALBs
-- **Listeners**: Support for HTTP, HTTPS, and TCP listeners with SSL/TLS termination
-- **Target Groups**: Multiple target group types (instance, IP, lambda) with health checks
-- **Listener Rules**: Advanced routing rules with multiple conditions and actions
-- **Access Logs**: Optional S3 access logging
-- **Security**: Integration with security groups and WAF
-- **Tags**: Comprehensive tagging support for cost management
+- Internal or internet-facing load balancers
+- HTTP/HTTPS/TCP/TLS listener support with SSL termination
+- Multiple target types: EC2 instances, IP addresses, Lambda functions
+- Path and host-based routing rules with priority handling
+- S3 access logging (configure bucket permissions separately)
+- Security group and WAF integration
+- Standard AWS tagging patterns
 
 ## Usage
 
-### Basic Example
+### Basic Load Balancer
 
 ```hcl
 module "alb" {
@@ -76,7 +67,7 @@ module "alb" {
 }
 ```
 
-### Complete Example with Listeners and Target Groups
+### Production Setup with HTTPS Redirect
 
 ```hcl
 module "alb" {
@@ -88,12 +79,12 @@ module "alb" {
   subnets            = aws_subnet.public[*].id
   vpc_id             = aws_vpc.main.id
 
-  # Access logs configuration
+  # S3 bucket must exist with proper bucket policy
   access_logs_enabled = true
   access_logs_bucket  = aws_s3_bucket.logs.id
   access_logs_prefix  = "alb-logs"
 
-  # Listeners
+  # Force HTTP to HTTPS - common security requirement
   listeners = {
     http = {
       port     = 80
@@ -119,7 +110,7 @@ module "alb" {
     }
   }
 
-  # Target Groups
+  # Backend services
   target_groups = {
     app-tg = {
       name        = "app-target-group"
@@ -142,7 +133,7 @@ module "alb" {
       name        = "api-target-group"
       port        = 8080
       protocol    = "HTTP"
-      target_type = "ip"
+      target_type = "ip"  # For container workloads
       health_check = {
         enabled             = true
         healthy_threshold   = 2
@@ -157,7 +148,7 @@ module "alb" {
     }
   }
 
-  # Target Group Attachments
+  # Register targets with specific groups
   target_group_attachments = {
     app-instance-1 = {
       target_group_key = "app-tg"
@@ -169,15 +160,15 @@ module "alb" {
     }
     api-container-1 = {
       target_group_key = "api-tg"
-      target_id        = "10.0.1.10"
+      target_id        = "10.0.1.10"  # Container IP
     }
   }
 
-  # Listener Rules
+  # Path-based routing - evaluated by priority
   listener_rules = {
     api-rule = {
       listener_key = "https"
-      priority     = 100
+      priority     = 100  # Lower numbers = higher priority
       actions = [
         {
           type             = "forward"
@@ -282,7 +273,7 @@ module "alb" {
 
 ## Examples
 
-### Basic ALB with HTTP to HTTPS Redirect
+### HTTP to HTTPS Redirect
 
 ```hcl
 module "alb_basic" {
@@ -330,7 +321,7 @@ module "alb_basic" {
 }
 ```
 
-### Internal ALB for Microservices
+### Internal Load Balancer for Microservices
 
 ```hcl
 module "alb_internal" {
@@ -362,7 +353,7 @@ module "alb_internal" {
       name        = "frontend-tg"
       port        = 3000
       protocol    = "HTTP"
-      target_type = "ip"
+      target_type = "ip"  # Common for ECS/EKS workloads
     }
     backend-tg = {
       name        = "backend-tg"
@@ -411,22 +402,22 @@ module "alb_internal" {
 }
 ```
 
-## Security Considerations
+## Important Notes
 
-1. **Security Groups**: Always configure appropriate security groups for the ALB
-2. **SSL/TLS**: Use HTTPS listeners with proper SSL policies for production workloads
-3. **Access Logs**: Enable access logs for monitoring and compliance
-4. **WAF Integration**: Consider integrating with AWS WAF for additional security
-5. **Deletion Protection**: Enable deletion protection for production load balancers
+### Security Groups
+Configure appropriate inbound rules - ALBs don't automatically allow traffic
 
-## Best Practices
+### SSL Certificates
+Use ACM certificates for HTTPS listeners. Certificate must be in same region as load balancer
 
-1. **Naming Convention**: Use consistent naming conventions for all resources
-2. **Tagging**: Implement comprehensive tagging for cost management and resource tracking
-3. **Health Checks**: Configure appropriate health check paths and intervals
-4. **Target Groups**: Use appropriate target types (instance, IP, lambda) based on your architecture
-5. **Listener Rules**: Organize rules by priority and use specific path patterns
-6. **Monitoring**: Set up CloudWatch alarms for ALB metrics
+### S3 Access Logs
+Requires bucket policy allowing ELB service to write. See AWS documentation for region-specific ELB account IDs
+
+### Health Checks
+Set realistic intervals and thresholds. Frequent checks can impact backend performance
+
+### Costs
+Cross-zone load balancing incurs additional data transfer charges for NLBs
 
 ## Contributing
 
