@@ -1,0 +1,41 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+  actions: read
+  checks: write
+jobs:
+  terraform-lint:
+    name: Terraform Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+      - name: Terraform Validate
+        run: terraform validate
+      - name: TFLint
+        uses: terraform-linters/tflint-action@v0.41.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12.2336.0
+        with:
+          directory: .
+      - name: Upload Lint Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-results
+          path: lint-results/
+    timeout-minutes: 15
+    continue-on-error: false
+    env:
+      TF_IN_AUTOMATION: true
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

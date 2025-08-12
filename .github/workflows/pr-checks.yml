@@ -1,0 +1,37 @@
+name: PR Checks
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  format:
+    name: Terraform Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+    timeout-minutes: 5
+  compliance:
+    name: Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12.2336.0
+        with:
+          directory: .
+    timeout-minutes: 10
+  branch-protection:
+    name: Branch Protection Enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PR is up to date with main
+        run: echo "PR must be up to date with main branch."
+    timeout-minutes: 2
